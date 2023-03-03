@@ -27,21 +27,3 @@ def milkbot_solution(
         )
     
     return soln
-
-def run_example():
-    milk = np.array([45, 73,  81,  81,  83,  81,  80,  72,  79,  71,  69,  69,  65,  61])
-    dim  = np.array([13, 41,  68, 107, 132, 167, 195, 226, 254, 283, 310, 346, 377, 405])
-    return milkbot_solution(milk, dim)
-
-def main():
-
-    soln = run_example()
-
-    print(soln.x)
-    print(soln.fun)
-    print(soln.status)
-    print(soln.success)
-    print(soln.nfev)
-    
-if __name__ == '__main__':
-    main()
