@@ -2,11 +2,11 @@
 
 ## Milkbot Formula Applied to Raw Milk
 
-![Raw Milk v DIM](docs\milk_by_dim.png)
+![Raw Milk v DIM](./docs/milk_by_dim.png)
 
 ## Percent Fat and Percent Protein Is Volatile
 
-![PCTF and PCTP v DIM](docs\pctf_pctp_by_dim.png)
+![PCTF and PCTP v DIM](./docs/pctf_pctp_by_dim.png)
 
 In particular, note the exceedingly high value for PCTF early on in the lactation period.
 
@@ -14,4 +14,4 @@ In particular, note the exceedingly high value for PCTF early on in the lactatio
 
 Compare ECM calculated using Raw PCTF and PCTP versus ECM calculated using smoothed PCTF and PCTP.
 
-![ECM v DIM](docs\ecm_raw_by_dim.png)
+![ECM v DIM](./docs/ecm_raw_by_dim.png)
