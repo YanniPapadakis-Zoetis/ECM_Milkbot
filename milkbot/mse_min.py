@@ -1,10 +1,8 @@
 from scipy.optimize import minimize
 from sklearn.metrics import mean_squared_error
 import numpy as np
+from milkbot.formulas import milkbot
 
-def milkbot(par: np.array, DIM: np.array):
-    a, b, c, d = par
-    return a * (1 - np.exp((c - DIM)/b)/2) * np.exp(-d*DIM)
 
 def to_min_factory(y: np.array, x: np.array):
     return lambda par: mean_squared_error(y, milkbot(par,x))
