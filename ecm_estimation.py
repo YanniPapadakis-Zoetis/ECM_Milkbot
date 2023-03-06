@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 from sklearn.linear_model import LinearRegression
-from milkbot.mse_min import milkbot_solution
+from milkbot.mse_min import milkbot_solution, milkbot_solution_b
 from milkbot.formulas import milkbot, ecm_milk
 
 df = pd.read_csv("docs/example1.csv")
@@ -34,7 +34,10 @@ plt.close()
 
 # Plot ECM v DIM
 df['ECM_RAW'] = df.apply(lambda x: ecm_milk(x.MILK, x.PCTF, x.PCTP), axis=1)
-ecm_raw_soln = milkbot_solution(df['ECM_RAW'], df['DIM'])
+par_init = np.array([85.0, 50, -90, 0.0009])
+est_bounds = [(0.0, None), (0.0, None), (None, 0.0), (0.0, None)]
+ecm_raw_soln = milkbot_solution(df['MILK'], df['DIM'], bounds=est_bounds, par_init=par_init)
+print(ecm_raw_soln)
 ecm_raw_est = milkbot(ecm_raw_soln.x, dim)
 df['ECM'] = df.apply(lambda x: ecm_milk(x.MILK, x.PCTF_EST, x.PCTP_EST), axis=1)
 ecm_soln = milkbot_solution(df['ECM'], df['DIM'])
