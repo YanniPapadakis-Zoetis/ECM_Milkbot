@@ -2,8 +2,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 from sklearn.linear_model import LinearRegression
-from milkbot.mse_min import milkbot_solution, milkbot_solution_b
-from milkbot.formulas import milkbot, ecm_milk
+from scipy.optimize import curve_fit
+from milkbot.formulas import ecm_milk, milkbot_
 
 df = pd.read_csv("docs/example1.csv")
 
@@ -24,8 +24,8 @@ plt.close()
 
 # Plot MILK v DIM
 dim = np.arange(df['DIM'].max())
-soln = milkbot_solution(df['MILK'], df['DIM'])
-milk_est = milkbot(soln.x, dim)
+soln, _ = curve_fit(milkbot_, df.DIM, df.MILK, p0=np.array([85.0, 50, -90, 0.0009]))
+milk_est = milkbot_(dim, *soln)
 plt.plot(df['DIM'],df['MILK'],'ro')
 plt.plot(dim,milk_est,'b-')
 plt.grid()
@@ -34,14 +34,12 @@ plt.close()
 
 # Plot ECM v DIM
 df['ECM_RAW'] = df.apply(lambda x: ecm_milk(x.MILK, x.PCTF, x.PCTP), axis=1)
-par_init = np.array([85.0, 50, -90, 0.0009])
-est_bounds = [(0.0, None), (0.0, None), (None, 0.0), (0.0, None)]
-ecm_raw_soln = milkbot_solution(df['MILK'], df['DIM'], bounds=est_bounds, par_init=par_init)
-print(ecm_raw_soln)
-ecm_raw_est = milkbot(ecm_raw_soln.x, dim)
+ecm_raw_soln, _ = curve_fit(milkbot_, df.DIM, df.ECM_RAW, 
+                            p0=np.array([df['ECM_RAW'].max(), 50, -90, 0.0009]))
+ecm_raw_est = milkbot_(dim, *ecm_raw_soln)
 df['ECM'] = df.apply(lambda x: ecm_milk(x.MILK, x.PCTF_EST, x.PCTP_EST), axis=1)
-ecm_soln = milkbot_solution(df['ECM'], df['DIM'])
-ecm_est = milkbot(ecm_soln.x, dim)
+ecm_soln, _ = curve_fit(milkbot_, df.DIM, df.ECM, p0=np.array([df['ECM'].max(), 50, -90, 0.0009]))
+ecm_est = milkbot_(dim, *ecm_soln)
 fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(8, 4), sharey=True)
 ax1.plot(df['DIM'],df['ECM_RAW'],'ko',label='ECM_RAW')
 ax2.plot(df['DIM'],df['ECM'],'bo',label='ECM')
