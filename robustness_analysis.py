@@ -1,77 +1,79 @@
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
+import time
+import warnings
+
 from scipy.optimize import curve_fit
-import seaborn as sns
-from milkbot.formulas import ecm_milk, milkbot_, cov2corr
+from scipy.optimize import OptimizeWarning
+from sklearn.metrics import mean_squared_error
 
-out = open("explore_minimization_methods.md", "w")
+from milkbot.formulas import ecm_milk, milkbot_
 
-print("# Explore Minimization Methods for Milkbot Estimation Applied to ECM", file=out)
+id_vars = ['BDAT','EarTag','LACT']
+df = pd.read_csv("docs/herd1183.csv")
+df.info()
 
-df = pd.read_csv("docs/example1.csv")
-df['ECM_RAW'] = df.apply(lambda x: ecm_milk(x.MILK, x.PCTF, x.PCTP), axis=1)
-meas_error = np.ones(len(df))
-early = np.where(df['DIM'] < 60)[0]
-meas_error[early] = 1.5
+# Impute PCTF, PCTP Values
+df['PCTF'] = df.groupby(id_vars)['PCTF'].bfill().ffill()
+df['PCTP'] = df.groupby(id_vars)['PCTP'].bfill().ffill()
+df.info()
 
+df['ECM'] = df.apply(lambda x: ecm_milk(x.MILK, x.PCTF, x.PCTP), axis=1)
+df['SIGMA'] = df["DIM"].apply(lambda x: 1 if x > 60 else 1.5)
 
 par_init = np.array([90.0, 100.0, -15.0, 0.002])
 bounds = (
-    [0., 0., -1000., 0.], 
-    [200., 100., 1000., 0.01]
+    [0., 1., -250., 0.], 
+    [500., 500., 200., 0.01]
+    )   
+
+res = []
+idx = []
+npoints = []
+rmse = []
+elapsed = []
+
+cases = 0
+cases_with_insufficient_data = 0
+cases_no_convergence = 0
+cases_covariance_not_estimated = 0
+
+for g, grp in df.groupby(id_vars):
+    cases += 1
+    if cases % 1000 == 0:
+        print(cases, cases_with_insufficient_data, cases_no_convergence, cases_covariance_not_estimated)
+    if len(grp) <= 4:
+        cases_with_insufficient_data += 1
+        continue
+    t = time.process_time()
+    p0 = par_init
+    #p0[0] = grp.ECM.max()
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", OptimizeWarning)
+        try:
+            popt, _ = curve_fit(milkbot_, grp.DIM, grp.ECM, p0=p0, sigma=grp.SIGMA, bounds=bounds)
+        except RuntimeError as re:
+            cases_no_convergence += 1
+            continue
+        except OptimizeWarning:
+            print("<=4 points for estimation")
+            cases_covariance_not_estimated += 1
+    elapsed.append(time.process_time() - t)
+    res.append(popt)
+    idx.append(g)
+    npoints.append(len(grp))
+    ecm_est = milkbot_(grp.DIM, *popt)
+    rmse.append(np.sqrt(mean_squared_error(grp.ECM, ecm_est)))
+    
+print("Cases With Insufficient Data ", cases_with_insufficient_data)
+print("Cases Where Estimation Failed", cases_no_convergence)
+
+res = pd.DataFrame(
+    np.array(res),
+    index=pd.MultiIndex.from_tuples(idx, names=id_vars),
+    columns=list('abcd')
     )
-dim = np.arange(500)
-
-plt.plot(df.DIM, df.ECM_RAW, 'ro', label='data')
-
-print("## Unconstrained Optimization: Levenberg-Marquardt Algorithm", file=out)
-popt, pcovlm, infodict, mesg, ier = curve_fit(milkbot_, df.DIM, df.ECM_RAW, p0=par_init, sigma=meas_error, full_output=True)
-print("\n- Milkbot Parameter Estimates a=%5.3f, b=%5.3f, c=%5.3f, d=%5.3f" % tuple(popt), file=out)
-print("\n- Error Correlation Matrix", file=out)
-print("\n![Error Correlations LM](docs/ecm_error_correlations_LM.png)", file=out)
-
-print("\n- Initial Parameters:", par_init, file=out)
-print("\n- Function Evaluations:", infodict['nfev'], file=out)
-print("\n- Convergence Message", mesg, file=out)
-print("\n- Return Status", ier, file=out)
-
-plt.plot(dim, milkbot_(dim, *popt), 'g-',
-         label='LM Fit: a=%5.3f, b=%5.3f, c=%5.3f, d=%5.3f' % tuple(popt))
-
-print("## Constrained Optimization: Trust Region Reflective Algorithm", file=out)
-popt, pcovbnd = curve_fit(milkbot_, df.DIM, df.ECM_RAW, p0=par_init, sigma=meas_error, bounds=bounds)
-print("\n- Milkbot Parameter Estimates a=%5.3f, b=%5.3f, c=%5.3f, d=%5.3f" % tuple(popt), file=out)
-print("\n- Error Correlation Matrix", file=out)
-print("\n![Error Correlations LM](docs/ecm_error_correlations_BND.png)", file=out)
-print("\n- Initial Parameters:    ", par_init, file=out)
-print("\n- Parameter Lower Bounds:", bounds[0], file=out)
-print("\n- Parameter Upper Bounds:", bounds[1], file=out)
-
-
-plt.plot(dim, milkbot_(dim, *popt), 'b:',
-         label='Bounded Fit: a=%5.3f, b=%5.3f, c=%5.3f, d=%5.3f' % tuple(popt))
-
-plt.legend()
-plt.grid()
-plt.title("Estimating ECM Using Unbounded and Bounded Minimization")
-plt.savefig('docs/ecm_estimation.png', bbox_inches='tight')
-plt.close()
-
-print("## Comparison", file=out)
-print("\n![ECM v DIM](./docs/ecm_estimation.png)", file=out)
-
-
-plt.figure(figsize=(4,3))
-sns.heatmap(cov2corr(pcovlm), fmt='.1g', annot=True)
-plt.savefig('docs/ecm_error_correlations_LM.png', bbox_inches='tight')
-plt.close()
-
-
-plt.figure(figsize=(4,3))
-sns.heatmap(cov2corr(pcovbnd), fmt='.1g', annot=True)
-plt.savefig('docs/ecm_error_correlations_BND.png', bbox_inches='tight')
-plt.close()
-
-
-out.close()
+res['npoints'] = npoints
+res['rmse'] = rmse
+res['processing_time'] = elapsed
+res.to_csv('herd1183_stats.csv')
