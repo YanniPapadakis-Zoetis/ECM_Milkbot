@@ -19,7 +19,7 @@ df['PCTP'] = df.groupby(id_vars)['PCTP'].bfill().ffill()
 df.info()
 
 df['ECM'] = df.apply(lambda x: ecm_milk(x.MILK, x.PCTF, x.PCTP), axis=1)
-df['SIGMA'] = df["DIM"].apply(lambda x: 1 if x > 60 else 1.5)
+df['SIGMA'] = df["DIM"].apply(lambda x: 1 if x > 30 else 1.5)
 
 par_init = np.array([90.0, 100.0, -15.0, 0.002])
 bounds = (
@@ -34,15 +34,16 @@ rmse = []
 elapsed = []
 
 cases = 0
+npoints_min = 4 # Min Number of Points For Estimation
 cases_with_insufficient_data = 0
 cases_no_convergence = 0
-cases_covariance_not_estimated = 0
+cases_covariance_not_estimated = 0 # Covariance Cannot Be Estimated When <5 Points Are Used
 
 for g, grp in df.groupby(id_vars):
     cases += 1
     if cases % 1000 == 0:
         print(cases, cases_with_insufficient_data, cases_no_convergence, cases_covariance_not_estimated)
-    if len(grp) <= 4:
+    if len(grp) < npoints_min:
         cases_with_insufficient_data += 1
         continue
     t = time.process_time()
@@ -56,7 +57,7 @@ for g, grp in df.groupby(id_vars):
             cases_no_convergence += 1
             continue
         except OptimizeWarning:
-            print("<=4 points for estimation")
+            #print("<=4 points for estimation")
             cases_covariance_not_estimated += 1
     elapsed.append(time.process_time() - t)
     res.append(popt)
