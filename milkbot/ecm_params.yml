@@ -1,3 +1,4 @@
+input_sql: "select * from ECMINPUTS"
 id_vars:
   - BDAT
   - ID
@@ -26,3 +27,4 @@ cfit:
 bounds:
   - [0., 10., -5., 0.0001]
   - [500., 50., 5., .002]
+abcd_fmt: "{:10} -> a:{:7.1f}, b:{:7.1f}, c:{:7.1f}, d:{:10.4f}"
