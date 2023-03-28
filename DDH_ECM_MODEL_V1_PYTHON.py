@@ -21,6 +21,9 @@ from pyspark.sql.window import Window
 from pyspark.ml.feature import QuantileDiscretizer
 
 from milkbot.formulas import ecm_milk, milkbot_, milkbot, error_allowance, estimate_milkbot_params
+from milkbot import param
+
+print(param)
 
 # Case Identification Keys
 id_vars = ["BDAT","ID","LACT"]
@@ -37,11 +40,11 @@ sigma_udf = fn.udf(error_allowance(), DoubleType())
 
 # COMMAND ----------
 
-# MAGIC %run ./DDH-ECM_Model_V1_INPUTS $LastECMRunDate="2023-03-01"
+# MAGIC %run ./DDH-ECM_Model_V1_INPUTS $LastECMRunDate="2023-03-01", $HerdID="10"
 
 # COMMAND ----------
 
-df = spark.sql("select * from ECMINPUTS where SourceHerdID = '10'")
+df = spark.sql("select * from ECMINPUTS")
 
 df.printSchema()
 
@@ -116,7 +119,7 @@ mbot_herd = df0.groupby().agg(
 mbot = mbot_herd.union(mbot_lagr)
 
 lagrs = []
-groups = ["HERD","LAGR_1","LAGR_2","LAGR_3","LAGR_4",]
+groups = ["HERD","LAGR_1","LAGR_2","LAGR_3","LAGR_4"]
 for r in mbot.select("LAGR","milkbot_pars").sort("LAGR").collect():
   lagrs.append(r.LAGR)
   print("{:10} -> a:{:7.1f}, b:{:7.1f}, c:{:7.1f}, d:{:10.4f}".format(groups[r.LAGR], *r.milkbot_pars))

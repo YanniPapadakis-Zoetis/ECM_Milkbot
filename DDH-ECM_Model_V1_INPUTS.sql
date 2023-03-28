@@ -1,5 +1,6 @@
 -- Databricks notebook source
-CREATE WIDGET TEXT LastECMRunDate DEFAULT '2023-03-01'
+CREATE WIDGET TEXT LastECMRunDate DEFAULT '2023-03-01';
+CREATE WIDGET TEXT HerdID DEFAULT '10';
 
 -- COMMAND ----------
 
@@ -68,6 +69,7 @@ from PrimaryTestDayData ptd
 	SelectedTestDates std /*select test dates within herd and lactation group (LAGR) with >=20 observations*/
 		on ptd.SourceCode=std.SourceCode and ptd.SourceHerdID=std.SourceHerdID and ptd.TestDate=std.TestDate
 where PercentileDIM<=90 /*restricting to observations at or below the 90th percentile for DIM within herd, lactation group, and test date*/
+	and std.SourceHerdID = "${HerdID}"
 
 -- COMMAND ----------
 
