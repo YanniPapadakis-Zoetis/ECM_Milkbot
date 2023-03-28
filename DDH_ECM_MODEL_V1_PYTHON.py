@@ -61,35 +61,35 @@ display(df.sort(param["sort_keys"]))
 ### only use cows with at least 2 test days beyond 200DIM for base curve 
 ###   to ensure the base curve represents the ENTIRE lactation
 
-accept = df.where("ECM is not null and ECM > 0")\
-  .where("DIM >= 200 and DIM < 350")\
+accept = df.where(param["accept"]["ecm_filter"])\
+  .where(param["accept"]["dim_filter"])\
   .groupby(*param["id_vars"])\
   .count()\
-  .where("count >= 2")
+  .where(param["accept"]["count_filter"])
 
 accept.count()
 
 # COMMAND ----------
 
-df0 = df.join(accept.drop("count"), on=param["id_vars"], how='inner')\
-  .where("ECM is not null and DIM < 325")\
+hlgdf = df.join(accept.drop("count"), on=param["id_vars"], how='inner')\
+  .where(param["hldf"]["filter"])\
   .withColumn("SIGMA", sigma_udf(fn.col("DIM")))\
   .cache()
 
 # COMMAND ----------
 
-df0.describe().display()
+hlgdf.describe().display()
 
 # COMMAND ----------
 
-mbot_lagr = df0.groupby("LAGR").agg(
+mbot_lagr = hlgdf.groupby("LAGR").agg(
       fn.collect_list('DIM').alias('dim'), 
       fn.collect_list('ECM').alias('ecm'),
       fn.collect_list('SIGMA').alias('sigma'),
     ).withColumn("milkbot_pars", milkbot_ez_udf(fn.col('dim'),fn.col('ecm'),fn.col("sigma")))\
   .select("LAGR","milkbot_pars")
 
-mbot_herd = df0.groupby().agg(
+mbot_herd = hlgdf.groupby().agg(
       fn.collect_list('DIM').alias('dim'), 
       fn.collect_list('ECM').alias('ecm'),
       fn.collect_list('SIGMA').alias('sigma'),
