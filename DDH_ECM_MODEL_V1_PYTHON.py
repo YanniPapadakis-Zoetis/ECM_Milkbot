@@ -35,7 +35,7 @@ print(param["id_vars"])
 
 # COMMAND ----------
 
-# MAGIC %run ./DDH-ECM_Model_V1_INPUTS $LastECMRunDate="2023-03-01", $HerdID="10"
+# MAGIC %run ./DDH-ECM_Model_V1_INPUTS $LastECMRunDate="2023-03-01" $HerdID="10"
 
 # COMMAND ----------
 
@@ -81,6 +81,7 @@ df0 = df.join(accept.drop("count"), on=param["id_vars"], how='inner')\
 df0.describe().display()
 
 # COMMAND ----------
+
 mbot_lagr = df0.groupby("LAGR").agg(
       fn.collect_list('DIM').alias('dim'), 
       fn.collect_list('ECM').alias('ecm'),
