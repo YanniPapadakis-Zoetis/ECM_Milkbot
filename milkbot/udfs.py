@@ -16,3 +16,5 @@ def estimate_milkbot_params_ez(t, y, s):
     return popt.tolist()
 
 milkbot_ez_udf = fn.udf(estimate_milkbot_params_ez, ArrayType(DoubleType()))
+
+group_name_udf = fn.udf(lambda i: param["hlgroups"][i], StringType())

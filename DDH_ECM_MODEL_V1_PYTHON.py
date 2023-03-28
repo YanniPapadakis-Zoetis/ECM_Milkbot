@@ -14,7 +14,7 @@
 # COMMAND ----------
 
 import pyspark.sql.functions as fn
-from milkbot.udfs import ecm_udf, sigma_udf, milkbot_ez_udf, milkbot_est
+from milkbot.udfs import ecm_udf, sigma_udf, milkbot_ez_udf, milkbot_est, group_name_udf
 from milkbot import param
 
 
@@ -97,12 +97,11 @@ for r in mbot.select("LAGR","milkbot_pars").sort("LAGR").collect():
 
 # COMMAND ----------
 
-group_name = fn.udf(lambda i: param["hlgroups"][i], StringType())
 X = spark.createDataFrame(
   data=[(g, dim) for g in lagrs for dim in range(0,350,5)], 
   schema = ["LAGR","dim"])\
   .join(mbot.select("LAGR","milkbot_pars") , on="LAGR", how="inner")\
-  .withColumn("group", group_name(fn.col("LAGR")))\
+  .withColumn("group", group_name_udf(fn.col("LAGR")))\
   .withColumn("ecm_est", milkbot_est(fn.col('dim'),fn.col('milkbot_pars')))
 
 # COMMAND ----------
