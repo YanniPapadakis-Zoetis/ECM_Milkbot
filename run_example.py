@@ -1,29 +1,36 @@
-import numpy as np
-import matplotlib.pyplot as plt
 import pandas as pd
-from milkbot.mse_min import milkbot_solution, milkbot
+import numpy as np
+import timeit
+from milkbot.formulas import milkbot_
+from scipy.optimize import curve_fit
+from sklearn.metrics import mean_squared_error
+
+setup_string = """
+import pandas as pd;
+import numpy as np;
+from milkbot.formulas import milkbot_;
+from scipy.optimize import curve_fit;
+par_init = np.array([90.0, 25.0, 15.0, 0.001]);
+df = pd.read_csv('docs/example1.csv');
+"""
+
+nrep = 10
+times = timeit.repeat(
+    "curve_fit(milkbot_, df.DIM, df.MILK, p0=par_init, full_output=True)", 
+    setup=setup_string,
+    number=nrep, 
+    repeat=5
+    )
 
 df = pd.read_csv("docs/example1.csv")
-print(df)
+par_init = np.array([90.0, 25.0, 15.0, 0.001])
+popt, pcov, infodict, mesg, ier = curve_fit(milkbot_, df.DIM, df.MILK, p0=par_init, full_output=True)
+milk_pred = milkbot_(df.DIM, *popt)
+mse = mean_squared_error(df.MILK, milk_pred)
 
-soln = milkbot_solution(df['MILK'], df['DIM'])
-
-print(soln.x)
-print(soln.fun)
-print(soln.status)
-print(soln.success)
-print(soln.nfev)
-
-dim = np.arange(df['DIM'].max())
-milk_est = milkbot(soln.x, dim)
-
-plt.plot(df['DIM'],df['PCTF'], 'ro', label="PCTF")
-plt.plot(df['DIM'],df['PCTP'], 'go', label="PCTP")
-plt.legend()
-plt.grid()
-plt.show()
-
-plt.plot(df['DIM'],df['MILK'], 'ro')
-plt.plot(dim,milk_est, 'b-')
-plt.grid()
-plt.show()
+print("Estimation Using the MilkBot Formula")
+print(pd.DataFrame([popt], columns=list('abcd'), index=['Example 1']))
+print("Estimation Optimal MSE: {:.3f}".format(mse))
+print("Convergence Message:",mesg)
+print("Solution Status = {}\nNo of Evaluations = {}".format(ier,infodict['nfev']))
+print("Evaluation Time = {:.1f} msec".format(np.mean(times)*1000/nrep))
