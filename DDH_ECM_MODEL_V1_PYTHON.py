@@ -13,16 +13,7 @@
 
 # COMMAND ----------
 
-import numpy as np
-
-from scipy.optimize import curve_fit
-from scipy.optimize import OptimizeWarning
-from sklearn.metrics import mean_squared_error
-
 import pyspark.sql.functions as fn
-from pyspark.sql.types import DoubleType, ArrayType, StringType
-
-from milkbot.formulas import milkbot_
 from milkbot.udfs import ecm_udf, sigma_udf, milkbot_ez_udf, milkbot_est
 from milkbot import param
 
@@ -72,7 +63,7 @@ accept.count()
 # COMMAND ----------
 
 hlgdf = df.join(accept.drop("count"), on=param["id_vars"], how='inner')\
-  .where(param["hldf"]["filter"])\
+  .where(param["hlgdf"]["filter"])\
   .withColumn("SIGMA", sigma_udf(fn.col("DIM")))\
   .cache()
 
