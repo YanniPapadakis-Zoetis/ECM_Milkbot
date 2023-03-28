@@ -1,0 +1,30 @@
+input_sql: "select * from ECMINPUTS"
+id_vars:
+  - BDAT
+  - ID
+  - LACT
+sort_keys:
+  - BDAT
+  - ID
+  - LAGR
+  - LACT
+  - DIM
+accept:
+  ecm_filter: "ECM is not null and ECM > 0"
+  dim_filter: "DIM >= 200 and DIM < 350"
+  count_filter: "count >= 2"
+hlgdf:
+  filter: "ECM is not null and DIM < 325"
+  lg_var: LAGR
+hlgroups: 
+  - HERD
+  - LAGR_1
+  - LAGR_2
+  - LAGR_3
+  - LAGR_4
+cfit:
+  p0: [100.0, 10.0, -1.0, 0.001]
+bounds:
+  - [0., 10., -5., 0.0001]
+  - [500., 50., 5., .002]
+abcd_fmt: "{:10} -> a:{:7.1f}, b:{:7.1f}, c:{:7.1f}, d:{:10.4f}"
