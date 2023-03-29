@@ -7,11 +7,16 @@
 
 -- COMMAND ----------
 
+-- MAGIC %md
+-- MAGIC ### Get Python Functions
+
+-- COMMAND ----------
+
 -- MAGIC %run ./milkbot/sql_py_include
 
 -- COMMAND ----------
 
--- MAGIC %md ## Get Model Inputs
+-- MAGIC %md ### Get Model Inputs
 
 -- COMMAND ----------
 
