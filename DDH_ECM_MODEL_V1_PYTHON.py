@@ -9,16 +9,9 @@
 
 # COMMAND ----------
 
-# MAGIC %pip install pyyaml
-
-# COMMAND ----------
-
 import pyspark.sql.functions as fn
 from milkbot.udfs import ecm_udf, sigma_udf, milkbot_ez_udf, milkbot_est, group_name_udf
 from milkbot import param
-
-
-print(param["id_vars"])
 
 # COMMAND ----------
 
