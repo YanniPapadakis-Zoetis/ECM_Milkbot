@@ -5,7 +5,7 @@ from milkbot import param
 from milkbot.formulas import milkbot_, error_allowance
 from scipy.optimize import curve_fit
   
-gdim = spark.createDataFrame([(i,) for i in range(0,350,5)], ["DIM"]).createOrReplaceTempView("GRAPHDIM")
+gdim = spark.createDataFrame([(i,) for i in range(350)], ["DIM"]).createOrReplaceTempView("GRAPHDIM")
 
 def estimate_milkbot_params(t, y, s):
     popt, _ = curve_fit(milkbot_, t, y, sigma=s, **param["cfit"])

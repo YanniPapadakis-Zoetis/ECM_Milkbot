@@ -90,6 +90,44 @@ from(
 
 -- COMMAND ----------
 
+-- DBTITLE 1,Graph Results
 select *, milkbot_est(dim, milkbot_pars) as ecm_est
 from mbot, graphdim
 order by group, dim
+
+-- COMMAND ----------
+
+-- MAGIC %md ## Individual Estimate
+
+-- COMMAND ----------
+
+create or replace temp view indiv as
+select ECMINPUTS.BDAT, ECMINPUTS.ID, ECMINPUTS.LACT, MBOT.group, ECMINPUTS.ECM, ECMINPUTS.DIM,
+  milkbot_est(ECMINPUTS.DIM, MBOT.milkbot_pars) as ecm_est0, MBOT.milkbot_pars
+from ECMINPUTS
+join ( 
+  select DF.BDAT, DF.ID, DF.LACT, count(*) as cnt
+  from ECMINPUTS DF
+  where DF.ECM is not null and DF.ECM > 0
+  group by DF.BDAT, DF.ID, DF.LACT
+  having cnt >= 5
+  ) ACCEPT on ECMINPUTS.BDAT=ACCEPT.BDAT and ECMINPUTS.ID=ACCEPT.ID and ECMINPUTS.LACT=ACCEPT.LACT
+join MBOT on group_name(ECMINPUTS.LAGR) = MBOT.group
+where ECMINPUTS.ECM is not null and ECMINPUTS.DIM > 5;
+
+select * from indiv;
+
+-- COMMAND ----------
+
+create or replace temp view cowlevel as
+select a_adj.*, array(a_adj.geom_mean_ratio * mbot.milkbot_pars[0], mbot.milkbot_pars[1], mbot.milkbot_pars[2], mbot.milkbot_pars[3]) as milkbot_pars_adj
+from (
+  select group, bdat, id, lact, exp(avg(log(ecm/ecm_est0))) as geom_mean_ratio 
+  from indiv 
+  group by group, bdat, id, lact
+  ) a_adj
+join MBOT on a_adj.group = mbot.group
+
+-- COMMAND ----------
+
+
