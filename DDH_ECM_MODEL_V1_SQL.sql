@@ -92,7 +92,7 @@ from(
 
 -- DBTITLE 1,Graph Results
 select *, milkbot_est(dim, milkbot_pars) as ecm_est
-from mbot, graphdim
+from mbot, (select dim from graphdim where mod(dim, 5) = 0)
 order by group, dim
 
 -- COMMAND ----------
@@ -119,7 +119,7 @@ select * from indiv;
 
 -- COMMAND ----------
 
-create or replace temp view cowlevel as
+create or replace table cowlevel as
 select a_adj.*, array(a_adj.geom_mean_ratio * mbot.milkbot_pars[0], mbot.milkbot_pars[1], mbot.milkbot_pars[2], mbot.milkbot_pars[3]) as milkbot_pars_adj
 from (
   select group, bdat, id, lact, exp(avg(log(ecm/ecm_est0))) as geom_mean_ratio 
@@ -127,6 +127,12 @@ from (
   group by group, bdat, id, lact
   ) a_adj
 join MBOT on a_adj.group = mbot.group
+
+-- COMMAND ----------
+
+select group, bdat, id, lact, sum(milkbot_est(dim, milkbot_pars_adj)) as m305
+from cowlevel, (select dim from graphdim where dim between 1 and 305)
+group by group, bdat, id, lact
 
 -- COMMAND ----------
 
