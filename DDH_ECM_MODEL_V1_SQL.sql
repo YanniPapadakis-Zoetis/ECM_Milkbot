@@ -90,6 +90,10 @@ from(
 
 -- COMMAND ----------
 
+select * from mbot
+
+-- COMMAND ----------
+
 -- DBTITLE 1,Graph Results
 select *, milkbot_est(dim, milkbot_pars) as ecm_est
 from mbot, (select dim from graphdim where mod(dim, 5) = 0)
@@ -133,6 +137,14 @@ join MBOT on a_adj.group = mbot.group
 select group, bdat, id, lact, sum(milkbot_est(dim, milkbot_pars_adj)) as m305
 from cowlevel, (select dim from graphdim where dim between 1 and 305)
 group by group, bdat, id, lact
+
+-- COMMAND ----------
+
+show databases
+
+-- COMMAND ----------
+
+show tables in default
 
 -- COMMAND ----------
 
