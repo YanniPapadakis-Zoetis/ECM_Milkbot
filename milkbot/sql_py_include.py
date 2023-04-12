@@ -1,6 +1,7 @@
 # Databricks notebook source
 import numpy as np
 import yaml
+from typing import List
 from pyspark.sql.types import DoubleType, ArrayType, StringType
 from scipy.optimize import curve_fit
 
@@ -23,7 +24,7 @@ def error_allowance(dim_llim: int = 30, err_inflation: float = 1.5) -> float:
 # Estimate Milkbot Parameters Given t (DIM), y (ECM), and s (Error Sigma) Data
 # Returns Estimated Parameters as List of 4 Float Numbers
 # param["cfit"] contains p0: Initial Parameter List and bounds: [LowerBoundList, UpperBoundList]
-def estimate_milkbot_params(t: list[float], y: list[float], s: list[float]) -> list[float]:
+def estimate_milkbot_params(t: List[float], y: List[float], s: List[float]) -> List[float]:
     popt, _ = curve_fit(milkbot_, t, y, sigma=s, **param["cfit"])
     return popt.tolist()
 
