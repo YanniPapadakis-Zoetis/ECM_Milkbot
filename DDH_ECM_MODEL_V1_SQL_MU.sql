@@ -16,6 +16,10 @@
 
 -- COMMAND ----------
 
+select current_date()
+
+-- COMMAND ----------
+
 -- MAGIC %md ### Get Model Inputs
 
 -- COMMAND ----------
